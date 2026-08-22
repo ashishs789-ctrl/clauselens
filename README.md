@@ -2,9 +2,14 @@
 
 ClauseLens is a secure PDF intelligence and collaboration workspace. Owners can upload private PDFs, receive AI-generated summaries, ask grounded questions, share revocable guest links, and collaborate through comments.
 
+## Live application
+
+- Production: [https://clauselens-gold.vercel.app](https://clauselens-gold.vercel.app)
+- Source: [https://github.com/ashishs789-ctrl/clauselens](https://github.com/ashishs789-ctrl/clauselens)
+
 ## Current status
 
-The application foundation, database migrations, authentication, protected dashboard, private PDF upload, text extraction, chunk embeddings, AI summaries, owner workspace, revocable guest sharing, shared comments, and grounded streaming PDF chat are complete. Feature implementation is proceeding in the order documented in [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md).
+All assignment must-have features are implemented and deployed. The production workflow has been verified end-to-end for authentication, private PDF upload, text extraction, chunk embeddings, AI summaries, grounded contextual chat, owner and guest comments, revocable guest sharing, and access denial after revocation.
 
 ## Local setup
 
@@ -22,6 +27,18 @@ Prerequisites:
 5. Open `http://localhost:3000`.
 
 Never commit `.env.local`, a Supabase service-role key, or an LLM API key.
+
+## Deployment
+
+The production application uses Vercel for Next.js hosting and Supabase for authentication, PostgreSQL, pgvector retrieval, and private file storage.
+
+1. Import the GitHub repository into Vercel with the Next.js preset and repository root as the root directory.
+2. Configure every variable listed below for the Production environment.
+3. Set `NEXT_PUBLIC_APP_URL` to the final HTTPS production domain.
+4. In Supabase Auth URL Configuration, set the production Site URL and add `<production-url>/auth/callback` as an allowed redirect URL.
+5. Apply the SQL migrations in filename order and deploy.
+
+Environment-variable changes on Vercel require a new deployment before they take effect.
 
 ## Environment variables
 
@@ -72,3 +89,33 @@ Image-only PDFs currently receive a clear failure state because OCR is outside t
 Each owner or guest session has a private conversation for a single document. For every question, ClauseLens combines the current question with recent user turns, creates a retrieval-query embedding, and uses pgvector similarity search to select up to eight page-aware chunks from that document only. The generation prompt receives those excerpts, the latest five conversational turns, and strict instructions to avoid outside knowledge, treat PDF text as untrusted data, acknowledge missing evidence, and cite supporting pages.
 
 Responses stream to the browser as newline-delimited events for immediate feedback. The completed assistant answer and retrieved page references are persisted after generation finishes. Chat requests are limited per session, and guest access is revalidated against link expiry and revocation before history or retrieval is available.
+
+## Verified feature checklist
+
+- Email/password signup, login, logout, and protected routes
+- Private PDF upload with extension, MIME, size, and binary-signature validation
+- Filename search and dashboard summary cards
+- Automatic text extraction, page-aware chunking, embeddings, and 3–5 sentence summaries
+- Responsive PDF workspace with summary, comments, and AI chat
+- Grounded streaming answers with page references and recent conversation context
+- Hashed, expiring, revocable share links and account-free guest sessions
+- Persistent owner and guest comments with document-scoped access
+- Revoked-link denial for the guest PDF, comments, and chat
+- Production HTTPS and baseline security headers
+
+## Known limitations and trade-offs
+
+- Image-only/scanned PDFs require OCR and currently enter a clear failed-processing state.
+- Comments are plain text and refresh-based; threaded replies, formatting, and real-time sockets are outside the must-have scope.
+- Dashboard search is filename-based. Semantic search is used for document chat but not for the optional dashboard-search enhancement.
+- Password recovery and invitation emails are deferred optional features.
+- The embedded PDF viewer depends on the browser's built-in PDF support.
+
+## Suggested walkthrough (3–5 minutes)
+
+1. Create an account or sign in and show the protected dashboard.
+2. Upload a selectable-text PDF and show its processing state, generated summary, and viewer.
+3. Ask a grounded question and a follow-up; point out streaming and page references.
+4. Add an owner comment and generate a share link.
+5. Open the link in a private window, enter a guest name, view the PDF, comment, and use chat without an account.
+6. Return as the owner, show both comments, revoke the link, and refresh the guest window to demonstrate immediate denial.
