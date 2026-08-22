@@ -165,11 +165,11 @@ language sql stable set search_path = '' as $$
     chunks.content,
     chunks.page_start,
     chunks.page_end,
-    1 - (chunks.embedding <=> query_embedding) as similarity
+    1 - (chunks.embedding OPERATOR(extensions.<=>) query_embedding) as similarity
   from public.document_chunks as chunks
   where chunks.document_id = match_document_id
     and chunks.embedding is not null
-  order by chunks.embedding <=> query_embedding
+  order by chunks.embedding OPERATOR(extensions.<=>) query_embedding
   limit greatest(1, least(match_count, 12));
 $$;
 
