@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, type ReactNode } from "react";
 import { LoaderCircle, Send, Sparkles } from "lucide-react";
 
 type Citation = { pageStart: number; pageEnd: number };
@@ -115,7 +115,7 @@ export function ChatPanel({ documentId }: { documentId: string }) {
     <>
       <div ref={listRef} className="flex-1 overflow-y-auto p-4">
         {loading ? <div className="grid h-full min-h-52 place-items-center"><div className="text-center text-sm text-slate-500"><LoaderCircle className="mx-auto mb-2 size-5 animate-spin text-[#5b4ee8]" aria-hidden />Loading conversation…</div></div> : messages.length ? (
-          <ol className="space-y-4">{messages.map((message) => <li key={message.id} className={`flex ${message.role === "user" ? "justify-end" : "justify-start"}`}><article className={`max-w-[92%] rounded-2xl px-4 py-3 ${message.role === "user" ? "rounded-br-md bg-slate-950 text-white" : "rounded-bl-md border border-indigo-100 bg-indigo-50 text-slate-800"}`}><p className={`text-[10px] font-bold uppercase tracking-wider ${message.role === "user" ? "text-slate-400" : "text-[#5b4ee8]"}`}>{message.role === "user" ? "You" : "ClauseLens AI"}</p>{message.content ? <p className="mt-1.5 whitespace-pre-wrap break-words text-sm leading-6">{message.content}</p> : <p className="mt-2 flex items-center gap-2 text-sm text-indigo-500"><LoaderCircle className="size-3.5 animate-spin" aria-hidden />Searching the PDF…</p>}{message.citations.length ? <div className="mt-3 flex flex-wrap gap-1.5">{message.citations.map((citation) => <span key={`${citation.pageStart}-${citation.pageEnd}`} className="rounded-full bg-white px-2 py-1 text-[10px] font-semibold text-indigo-600 ring-1 ring-indigo-100">{citation.pageStart === citation.pageEnd ? `Page ${citation.pageStart}` : `Pages ${citation.pageStart}–${citation.pageEnd}`}</span>)}</div> : null}</article></li>)}</ol>
+          <ol className="space-y-4">{messages.map((message) => <li key={message.id} className={`flex ${message.role === "user" ? "justify-end" : "justify-start"}`}><article className={`max-w-[92%] rounded-2xl px-4 py-3 ${message.role === "user" ? "rounded-br-md bg-slate-950 text-white" : "rounded-bl-md border border-indigo-100 bg-indigo-50 text-slate-800"}`}><p className={`text-[10px] font-bold uppercase tracking-wider ${message.role === "user" ? "text-slate-400" : "text-[#5b4ee8]"}`}>{message.role === "user" ? "You" : "ClauseLens AI"}</p>{message.content ? <div className="mt-1.5 whitespace-pre-wrap break-words text-sm leading-6"><SafeMarkdown content={message.content} /></div> : <p className="mt-2 flex items-center gap-2 text-sm text-indigo-500"><LoaderCircle className="size-3.5 animate-spin" aria-hidden />Searching the PDF…</p>}{message.citations.length ? <div className="mt-3 flex flex-wrap gap-1.5">{message.citations.map((citation) => <span key={`${citation.pageStart}-${citation.pageEnd}`} className="rounded-full bg-white px-2 py-1 text-[10px] font-semibold text-indigo-600 ring-1 ring-indigo-100">{citation.pageStart === citation.pageEnd ? `Page ${citation.pageStart}` : `Pages ${citation.pageStart}–${citation.pageEnd}`}</span>)}</div> : null}</article></li>)}</ol>
         ) : <div className="grid h-full min-h-52 place-items-center text-center"><div><span className="mx-auto grid size-12 place-items-center rounded-2xl bg-indigo-50 text-[#5b4ee8]"><Sparkles className="size-5" aria-hidden /></span><h2 className="mt-4 font-semibold text-slate-950">Ask about this PDF</h2><p className="mt-2 max-w-xs text-sm leading-6 text-slate-600">Answers use relevant document passages and include page references when available.</p><div className="mt-4 flex flex-wrap justify-center gap-2">{["What are the key obligations?", "What dates matter?"].map((suggestion) => <button key={suggestion} type="button" onClick={() => setQuestion(suggestion)} className="rounded-full border border-slate-200 bg-white px-3 py-1.5 text-xs font-medium text-slate-600 hover:border-indigo-200 hover:text-[#5b4ee8]">{suggestion}</button>)}</div></div></div>}
       </div>
       <form onSubmit={(event) => void ask(event)} className="border-t border-slate-200 bg-slate-50 p-4">
@@ -129,4 +129,21 @@ export function ChatPanel({ documentId }: { documentId: string }) {
       </form>
     </>
   );
+}
+
+function SafeMarkdown({ content }: { content: string }) {
+  const parts = content.split(/(`[^`\n]+`|\*\*[^*\n]+\*\*|\*[^*\n]+\*)/g);
+
+  return parts.map((part, index): ReactNode => {
+    if (part.startsWith("**") && part.endsWith("**")) {
+      return <strong key={index} className="font-semibold">{part.slice(2, -2)}</strong>;
+    }
+    if (part.startsWith("*") && part.endsWith("*")) {
+      return <em key={index}>{part.slice(1, -1)}</em>;
+    }
+    if (part.startsWith("`") && part.endsWith("`")) {
+      return <code key={index} className="rounded bg-white/70 px-1 py-0.5 font-mono text-[0.9em]">{part.slice(1, -1)}</code>;
+    }
+    return part;
+  });
 }
