@@ -54,6 +54,7 @@ function splitOversizedText(value: string, maxChars: number) {
       if (breakAt > cursor + maxChars * 0.6) end = breakAt + 1;
     }
     segments.push(value.slice(cursor, end).trim());
+    if (end >= value.length) break;
     cursor = Math.max(end - OVERLAP_CHARS, cursor + 1);
   }
   return segments.filter(Boolean);

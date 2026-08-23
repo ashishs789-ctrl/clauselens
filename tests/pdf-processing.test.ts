@@ -31,8 +31,11 @@ describe("page-aware PDF processing", () => {
   });
 
   it("splits oversized pages into bounded overlapping chunks", () => {
-    const chunks = chunkPages(["Legal clause. ".repeat(900)]);
+    const source = "Legal clause. ".repeat(900);
+    const chunks = chunkPages([source]);
     expect(chunks.length).toBeGreaterThan(1);
+    expect(chunks.length).toBeLessThan(6);
+    expect(chunks.reduce((total, chunk) => total + chunk.content.length, 0)).toBeLessThan(source.length * 1.5);
     expect(chunks.every((chunk) => chunk.pageStart === 1 && chunk.pageEnd === 1)).toBe(true);
     expect(chunks.every((chunk) => chunk.tokenCount > 0)).toBe(true);
   });
