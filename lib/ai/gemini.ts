@@ -36,7 +36,10 @@ export async function embedDocuments(contents: string[]) {
     const batch = contents.slice(offset, offset + 16);
     const response = await getClient().models.embedContent({
       model: env.GEMINI_EMBEDDING_MODEL,
-      contents: batch,
+      // A string[] is normalized as multiple parts of one Content by the SDK,
+      // which produces only one embedding. Explicit Content objects preserve
+      // the one-input-to-one-vector relationship required by retrieval.
+      contents: batch.map((content) => ({ parts: [{ text: content }] })),
       config: { taskType: "RETRIEVAL_DOCUMENT", outputDimensionality: 768 },
     });
     const batchVectors = response.embeddings?.map((embedding) => embedding.values ?? []) ?? [];
